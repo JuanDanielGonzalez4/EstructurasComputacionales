@@ -2,9 +2,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <stdio.h>
-#include <string.h>
-
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,31 +42,13 @@ static void MX_USART2_UART_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
-uint8_t Rx_data[2] = "";
-
+uint8_t Rx_data[10];
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	HAL_UART_Transmit(&huart2, Rx_data, sizeof(Rx_data), 1);
-
-
-
-	if ((strcmp((char*)Rx_data,"ON")) == 0)
-	{
-		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-	}
-
-	else if ((strcmp((char*)Rx_data,"OF")) == 0)
-	{
-		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-	}
-
-	else
-	{
-		HAL_UART_Transmit(&huart2, (uint8_t*)"Comando equivocado. Los comandos son: ON - OF \r\n", 48, 1);
-	}
-
-	HAL_UART_Receive_IT(&huart2, Rx_data, sizeof(Rx_data));
+	HAL_GPIO_TogglePin (GPIOA,GPIO_PIN_5);
+	HAL_UART_Receive_IT(&huart2, Rx_data, 4);//restart the interrupt reception mode
 }
+
 
 int main(void)
 {
@@ -86,6 +65,7 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
+  HAL_UART_Receive_IT(&huart2, Rx_data, 4);
 
   /* USER CODE BEGIN SysInit */
   /* USER CODE END SysInit */
@@ -99,9 +79,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-	 HAL_UART_Receive_IT(&huart2, my_str, sizeof(my_str));
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
@@ -170,7 +148,7 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 1 */
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 921600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -220,10 +198,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin_Pin|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|LD2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LD2_Pin_Pin PA5 */
-  GPIO_InitStruct.Pin = LD2_Pin_Pin|GPIO_PIN_5;
+  /*Configure GPIO pins : PA0 LD2_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
