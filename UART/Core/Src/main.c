@@ -25,7 +25,7 @@ DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 /* USER CODE END PV */
-
+uint8_t txbusy;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -43,12 +43,31 @@ static void MX_USART2_UART_Init(void);
   * @retval int
   */
 uint8_t Rx_data[10];
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	HAL_GPIO_TogglePin (GPIOA,GPIO_PIN_5);
-	HAL_UART_Receive_IT(&huart2, Rx_data, 4);//restart the interrupt reception mode
+
+int _write(int file, char *ptr, int len){
+	while(txbusy != 0){
+		/*wait*/
+	}
+	HAL_UART_Transmit(&huart2, (uint8_t*)ptr, len, 10);
+	tx_busy = 1;
+	return len;
 }
 
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart){
+	HAL_GPIO_TogglePin (GPIOA,GPIO_PIN_5);
+
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	printf("Received: [%s]\r\n", Rx_data);
+	HAL_UART_Receive_DMA(&huart2, Rx_data, 4);
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	txbusy = 0;
+}
 
 int main(void)
 {
@@ -65,7 +84,7 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
-  HAL_UART_Receive_IT(&huart2, Rx_data, 4);
+
 
   /* USER CODE BEGIN SysInit */
   /* USER CODE END SysInit */
@@ -76,7 +95,8 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
-
+  HAL_UART_Receive_IT(&huart2, Rx_data, 4);
+  HAL_UART_Receive_DMA(&huart2, Rx_data, 4);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
     /* USER CODE END WHILE */
